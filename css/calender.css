@@ -1,0 +1,60 @@
+/* Custom font */
+@import url('https://fonts.googleapis.com/css?family=Armata');
+body {
+    font-family: 'Armata', sans-serif;
+    /*background-color: lightgrey;*/
+}
+#calender-container {
+    padding: 5%;
+}
+#calender-header {
+    text-align: center;
+}
+#calender-title, #prev-container, #next-container {
+    border-top: none;
+    font-size: xx-large;
+}
+.btn:focus, .btn:active {
+    outline: none !important;
+}
+#calender {
+    table-layout: fixed;
+}
+#calender-day-label-container {
+
+}
+.calender-day-label {
+    text-align: center;
+    font-size: larger;
+}
+.calender-row {
+
+}
+.calender-day {
+
+}
+.calender-day:hover {
+    background-color: rgba(81, 120, 255, 0.46);
+}
+.modal-content  {
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
+}
+#event-list-container {
+    padding-left: 5px;
+}
+ul {
+    list-style-type: none;
+}
+.save-btn, .del-btn {
+    font-size: small;
+}
+.event-name {
+}
+.spacing {
+    /*padding: 5px;*/
+}
+
+
+

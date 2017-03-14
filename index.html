@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Calendar</title>
+
+    <!-- CDNs-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <!-- Custom External Files-->
+    <link rel="stylesheet" href="css/calender.css">
+    <script type="text/javascript" src="js/calender.js"></script>
+</head>
+
+<body>
+<!-- Day Modal -->
+<div id="dayModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" id="modal-title"></h4>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="modal-body">
+                <div class="alert alert-danger hidden" id="invalid-time-message">
+                    <strong>Error!</strong> Invalid time. Make sure that your event times don't conflict.
+                </div>
+                <div id="event-list-container"><ul class="list-group" id="event-list"></ul></div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <div class="text-center"><button type="button" class="btn" id="new-event-btn">New Event</button></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="calender-container"></div>
+</body>
+
+
+<script>
+    var events = {};
+    var event_id = 0;
+
+    var currentDate = new Date();
+    var displayedDate;
+
+    // Load the calender for the current month
+    $(function() {
+        var calender = new Calender(currentDate.getMonth(), currentDate.getFullYear());
+        $('#calender-container').html(calender.getHTML());
+        displayedDate = currentDate;
+    });
+
+    // Next & Prev month buttons
+    function prevBtn() {
+        if(displayedDate.getMonth() == 0) {
+            displayedDate.setMonth(11);
+            displayedDate.setFullYear(displayedDate.getFullYear() - 1);
+        } else {displayedDate.setMonth(displayedDate.getMonth() - 1)}
+
+        var calender = new Calender(displayedDate.getMonth(), displayedDate.getFullYear());
+        $('#calender-container').html(calender.getHTML());
+    }
+    function nextBtn() {
+        if(displayedDate.getMonth() == 11) {
+            displayedDate.setMonth(0);
+            displayedDate.setFullYear(displayedDate.getFullYear() + 1);
+        } else {displayedDate.setMonth(displayedDate.getMonth() + 1)}
+
+        var calender = new Calender(displayedDate.getMonth(), displayedDate.getFullYear());
+        $('#calender-container').html(calender.getHTML());
+    }
+
+    // Modal Functions
+    function appendEvent(event_id, event_name) {
+        $('#event-list').append(
+                '<li id="event-' + event_id + '" class="event list-group-item"><div>' +
+                '<button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)">' +
+                '<span class="glyphicon glyphicon-floppy-disk"></span></button><div class="spacing"></div>' +
+                '<input class="event-name" type="text" id="event-name-' + event_id + '" value="' + event_name + '">' +
+                '<input class="event-start" type="time" id="event-start-' + event_id + '" value="' + events[event_id].event_start + '">' +
+                '<input class="event-end" type="time" id="event-end-' + event_id + '" value="' + events[event_id].event_end + '">' +
+                '<button class="del-btn btn" id="del-btn-'+ event_id + '" onclick="deleteEvent(this)">' +
+                '<span class="glyphicon glyphicon-trash"></span></button>' +
+                '</li>');
+    }
+    function expandDay(day) {
+        var textDate = formatDate(day, displayedDate.getFullYear().toString());
+        $('#dayModal').modal('show');
+        $('#modal-title').html(textDate);
+        $('#new-event-btn').attr('name', textDate);
+
+        for(var key in events) {
+            if(events[key].event_date == textDate) {
+                appendEvent(events[key].event_id, events[key].event_name);
+            }
+        }
+    }
+    $('#new-event-btn').on('click', function () {
+        events[event_id] = new Event(event_id, $('#modal-title').text());
+        events[event_id].event_name = 'new event';
+        appendEvent(event_id, events[event_id].event_name);
+        event_id++;
+    });
+    $('#dayModal').on('hidden.bs.modal', function () {
+        $('#event-list').empty();
+        $('#invalid-time-message').addClass('hidden');
+    });
+    function saveEvent(elem) {
+        var event_id = Number(elem.id.replace('save-btn-', ""));
+        var id_string = event_id.toString();
+
+        events[event_id].set_name(document.getElementById('event-name-' + id_string).value);
+
+        var start = document.getElementById('event-start-' + id_string).value;
+        var end = document.getElementById('event-end-' + id_string).value;
+
+        if(isValidTime(start, end, events[event_id].event_date, event_id)) {
+            events[event_id].set_time(start, end);
+        } else { $('#invalid-time-message').removeClass('hidden'); }
+    }
+    function deleteEvent(elem) {
+        var event_id = Number(elem.id.replace('del-btn-', ""));
+        delete events[event_id];
+        $('#event-' + event_id.toString()).remove();
+    }
+
+    // Helper function
+    function formatDate(date, year) {
+        var d_array = date.split('-');
+        return MONTHS[d_array[0]] + " " + d_array[1].toString() + " " + year;
+    }
+    function isValidTime(start, end, date, id) {
+        if(start >= end) { return false; }
+
+        for(var i = 0; i < Object.keys(events).length; i++) {
+            if(events[i].event_date == date && id != i) {
+                if(events[i].event_start <= end) { return false; }
+                if(events[i].event_end >= start) { return false; }
+            }
+        }
+
+        return true;
+    }
+</script>
+
+</html>
