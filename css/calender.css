@@ -13,7 +13,7 @@ body {
 }
 @media(max-aspect-ratio: 16/9) {
     #calender-container {
-        margin: 2% 3% 0% 3%;
+        margin: 2% 3% 0 3%;
         width: 94%;
     }
 }
@@ -27,9 +27,6 @@ body {
 #calender-title, #prev-container, #next-container {
     border-top: none;
     font-size: xx-large;
-}
-.btn:focus, .btn:active {
-    outline: none !important;
 }
 #calender {
     table-layout: fixed;
@@ -45,6 +42,25 @@ body {
     background-color: rgba(81, 120, 255, 0.46);
     font-size: large;
 }
+.dot {
+    font-size: large;
+    color: blue;
+    margin-top: -4px;
+    margin-right: -2px;
+}
+
+.btn {
+    background-color: aliceblue;
+    border-radius: 0px;
+}
+.btn:focus, .btn:active {
+    outline: none !important;
+}
+.btn:hover {
+    background-color: #eefff6;
+}
+
+
 .modal-content  {
     -webkit-border-radius: 0px;
     -moz-border-radius: 0px;
@@ -54,21 +70,17 @@ body {
     padding-left: 5px;
 }
 ul {
+    padding: 0;
     list-style-type: none;
 }
 .save-btn, .del-btn {
     font-size: small;
 }
-.dot {
-    font-size: large;
-    color: blue;
-    margin-top: -4px;
-    margin-right: -2px;
-}
 .list-group-item {
     align-content: center;
     margin-top: 5px;
     border-radius: 0;
+    background-color: rgba(70, 130, 180, 0.18);
 }
 .alert {
     border-radius: 0;
@@ -86,3 +98,28 @@ ul {
     position: relative;
     left: -20px;
 }
+
+.form-control {
+    background-color: aliceblue;
+    box-shadow: none;
+    border: none;
+}
+.form-control:focus {
+    background-color: white;
+}
+
+#hover-preview {
+    z-index: 1;
+    position: absolute;
+    background-color: whitesmoke;
+    pointer-events: none;
+    margin: 10px;
+
+    -moz-box-shadow: 10px 10px 5px #888;
+    -webkit-box-shadow: 10px 10px 5px #888;
+    box-shadow: 10px 10px 5px #888;
+}
+#preview-list {
+    margin: 3px;
+}
+

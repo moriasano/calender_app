@@ -53,10 +53,13 @@
     </div>
 </div>
 
+<!-- Hover Preview -->
+<div id="hover-preview" style="display: none">
+    <div id="preview-container"><ul id="preview-list"></ul></div>
+</div>
+
 <div id="calender-container"></div>
 
-<!-- TODO: Temporary testing button -->
-<button type="button" class="btn" onclick="for(i in events) { alert(i.toString() + ': ' + events[i]); }"></button>
 </body>
 
 
@@ -69,9 +72,16 @@
 
     // Loading the calendar
     $(function() {
+
+        // localStorage.clear();
+
         var calender = new Calender(currentDate.getMonth(), currentDate.getFullYear());
         $('#calender-container').html(calender.getHTML());
         displayedDate = currentDate;
+
+        // Load Local Storage :)
+        var l_storage = localStorage.getItem('events');
+        if(l_storage) { loadJSON(l_storage);}
 
         refreshDisplay();
     });
@@ -86,9 +96,64 @@
             var date_str_1 = MONTHS[displayedDate.getMonth()] + " " + displayedDate.getFullYear();
 
             if(date_str == date_str_1){
-                $('#event-notifier-' + dateStrToNum(events[key].event_date)).append('<div class="dot col-xs-1">' + '&#8226;' + '</div>');
+                $('#event-notifier-' + dateStrToNum(events[key].event_date)).append(
+                        '<div class="dot col-xs-1">' + '&#8226;' + '</div>');
             }
         }
+    }
+
+    // HTML Local Storage
+    function encodeEventDict() {
+        var json_dict = {};
+
+        // Manually re-index entries
+        var i = 0;
+        for(var key in events) {
+            var event = events[key];
+
+            var id = i;
+            var date = event.event_date;
+            var name = event.event_name;
+            var start = event.event_start;
+            var end = event.event_end;
+
+            json_dict[i] = {
+                'id': id.toString(),
+                'date': date.toString(),
+                'name': name.toString(),
+                'start': start.toString(),
+                'end': end.toString()
+            };
+            
+            i++;
+        }
+
+        return JSON.stringify(json_dict);
+    }
+    function loadJSON(json_string) {
+        var json_dict = JSON.parse(json_string);
+        // alert(JSON.stringify(json_dict));
+
+        for(var key in json_dict) {
+            if(json_dict.hasOwnProperty(key)) {
+                var event = json_dict[key];
+
+                var date = event.date;
+                var name = event.name;
+                var start = event.start;
+                var end = event.end;
+
+                var e = new Event(event_id, date);
+                e.set_name(name);
+                e.set_time(start, end);
+                events[event_id] = e;
+
+                event_id++;
+            }
+        }
+    }
+    function setLocalStorage() {
+        localStorage.setItem("events", encodeEventDict())
     }
 
     // Next & Prev month buttons
@@ -208,7 +273,10 @@
             $("#event-update-success").fadeTo(2150, 800).slideUp(800, function(){
                 $("#event-update-success").slideUp(500);
             });
-        } else {
+
+            setLocalStorage();
+        }
+        else {
             $("#invalid-time-message").removeClass('hidden');
             $("#invalid-time-message").fadeTo(2150, 800).slideUp(800, function(){
                 $("#event-update-success").slideUp(500);
@@ -221,9 +289,33 @@
         var event_id = Number(elem.id.replace('del-btn-', ""));
         delete events[event_id];
         $('#event-' + event_id.toString()).remove();
+
+        setLocalStorage();
+    }
+
+    // Event Hover Preview
+    function dayPreview(id) {
+
+        for(var key in events) {
+            // TODO: This breaks with events on same date but different year
+            if(events[key].event_date == formatDate(id, currentDate.getFullYear())) {
+                $('#preview-list').append('<li class="event-preview">' + events[key].event_name + '</li>');
+            }
+        }
+
+        if($('#preview-list').html().length > 6) {  // length of empty html = 6
+            $('#hover-preview').css({top: event.clientY, left: event.clientX}).show();
+        }
+    }
+    function closePreview() {
+        $('#hover-preview').hide();
+        $('#preview-list').empty();
     }
 
     // Helper function
+    /* TODO: These time format functions are unnecessarily complex.
+             It will do for now, but the way time is stored should
+             be standardized in the future.                          */
     function formatDate(date, year) {
         // ex. ('1-2', '2017') -> 'January 2 2017)
 
@@ -233,12 +325,43 @@
     function formatTime(time) {
         // ex. '12:30am' -> '00:30:00'
 
-        var hour_pos = time.length - 5;
-        return (Number(time.substr(0, hour_pos)) % 12).toString() + time.substr(hour_pos, hour_pos + 1) + ":00";
+        var hours = 0;
+        var minutes = 0;
+
+        if(time.substr(time.length - 2, time.length).toLowerCase() == 'pm') {
+            if(time.substr(0, 2) != '12') {
+                hours += 12;
+            }
+
+            time = time.substr(0, time.length - 2);
+        }
+
+        else if (time.substr(time.length - 2, time.length).toLowerCase() == 'am') {
+            if(time.substr(0, 2) == '12') {
+                time = time.replace('12', '00');
+            }
+
+            time = time.substr(0, time.length - 2);
+        }
+
+        if(time.includes(':')) {
+            var t_list = time.split(":");
+            hours += Number(t_list[0]);
+            minutes = Number(t_list[1]);
+        }
+        else { hours = Number(time) }
+
+        hours = hours.toString();
+        minutes = minutes.toString();
+
+        if(hours.length == 1) { hours = '0' + hours}
+        if(minutes.length == 1) { minutes = '0' + minutes}
+
+        return hours + ":" + minutes + ":00";
     }
     function is_time_less_then(time_1, time_2) {
         // Is time_1 <= time_2 ?
-        
+
         var format_1 = Number(formatTime(time_1).replace(new RegExp(':', 'g'), ''));
         var format_2 = Number(formatTime(time_2).replace(new RegExp(':', 'g'), ''));
 
@@ -253,12 +376,20 @@
     function isValidTime(start, end, date, id) {
         // Checks that the times do not overlap with other events on the same day
 
-        if(start >= end) { return false; }
+        if(is_time_less_then(formatTime(end), formatTime(start)) || end == start) { return false; }
 
         for(var key in events) {
             if(events[key].event_date == date && events[key].event_id != id) {
-                if(is_time_less_then(events[key].event_start, end)) { return false; }
-                if(is_time_less_then(start, events[key].event_end)) { return false; }
+
+                // New event happens after old event
+                if(is_time_less_then(events[key].event_start, end)) {
+                    if(is_time_less_then(start, events[key].event_end)) { return false; }
+                }
+
+                // New event happens before old event
+                else if (is_time_less_then(start, events[key].event_end)){
+                    if(is_time_less_then(events[key].event_start, end)) { return false; }
+                }
             }
         }
 

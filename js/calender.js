@@ -43,9 +43,10 @@ function Calender(month, year) {
             for(var j = 0; j <= 6; j++) {
                 if(day <= monthLength && (i > 0 || j >= startDay)) {
                     var id = this.month.toString()+ "-" + day.toString();
-                    html += '<td class="calender-day" id="' + id + '" onclick="expandDay(this.id)">' +
+                    html += '<td class="calender-day" id="' + id + '" onclick="expandDay(this.id)"' +
+                            ' onmouseenter="dayPreview(this.id)" onmouseleave="closePreview()">' +
                             '   <div class="row" id="event-notifier-' + id + '">' +
-                            '       <div class="col-xs-2">&nbsp;' + day + '</div>' +
+                            '       <div class="col-xs-1 cal-num">&nbsp;' + day + '</div>' +
                             '   </div>';
                     day++;
                 } else {
@@ -79,6 +80,14 @@ function Event(event_id, event_date) {
     this.set_time = function (start, end) {
         this.event_start = start;
         this.event_end = end;
+    };
+    // Need this for testing
+    this.toString = function () {
+        var str = this.event_id.toString() + " " + this.event_date;
+        if(this.event_name) { str += " " + this.event_name; }
+        if(this.event_start) { str += " " + this.event_start; }
+        if(this.event_end) { str += " " + this.event_end; }
+
+        return str;
     }
-    
 }
