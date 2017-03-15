@@ -170,7 +170,7 @@
                 '<li id="event-' + event_id + '" class="event list-group-item"><div>' +
                 '   <div class="row">' +
                 '   <div class="col-xs-1">' +
-                '       <button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)">' +
+                '       <button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)" tooltip="Save">' +
                 '           <span class="glyphicon glyphicon-floppy-disk"/></button></div>' +
                 '   <div class="col-xs-4">' +
                 '       <input class="event-name form-control" type="text" id="event-name-' + event_id + '" value="' + event_name + '">' +
@@ -200,7 +200,7 @@
             }
         }
 
-        // Initilize timepicker inputs
+        // Initialize timepicker inputs
         $('.event-start').each(function () {
             $(this).timepicker();
 
@@ -253,13 +253,13 @@
             events[event_id].set_time(start, end);
 
             $("#event-update-success").removeClass('hidden');
-            $("#event-update-success").fadeTo(2600, 500).slideUp(800, function(){
+            $("#event-update-success").fadeTo(2150, 800).slideUp(800, function(){
                 $("#event-update-success").slideUp(500);
             });
 
         } else {
             $("#invalid-time-message").removeClass('hidden');
-            $("#invalid-time-message").fadeTo(2600, 500).slideUp(800, function(){
+            $("#invalid-time-message").fadeTo(2150, 800).slideUp(800, function(){
                 $("#event-update-success").slideUp(500);
             });
         }

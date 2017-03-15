@@ -63,6 +63,7 @@ ul {
     font-size: large;
     color: blue;
     margin-top: -4px;
+    margin-right: -2px;
 }
 .list-group-item {
     align-content: center;
