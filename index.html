@@ -54,6 +54,9 @@
 </div>
 
 <div id="calender-container"></div>
+
+<!-- TODO: Temporary testing button -->
+<button type="button" class="btn" onclick="for(i in events) { alert(i.toString() + ': ' + events[i]); }"></button>
 </body>
 
 
@@ -70,55 +73,9 @@
         $('#calender-container').html(calender.getHTML());
         displayedDate = currentDate;
 
-        // Check for local storage
-        var events_json = JSON.parse(localStorage.getItem('event_dict'));
-        if(Object.keys(events_json).length > 0) { // Empty json will have length of 2
-            for(var event in events_json) {
-                if(events_json.hasOwnProperty(event)) {
-                    for(var property in events_json[event]) {
-                        var prop_list = [];
-                        if(events_json[event].hasOwnProperty(property)) {
-                            prop_list.append(property)
-                        }
-                        alert(prop_list.toString());
-                    }
-
-//                    for(var prop in prop_list) {
-//                        alert(events_json[event][prop]);
-//                    }
-                }
-
-
-            }
-
-
-            // alert(Object.keys(events_json).toString());
-//
-////            //TODO: This part is sloppy, but works for now.
-////            var events_json = JSON.parse(localStorage.getItem('event_dict'));
-////            for(var i = 0; i < event_id; i++) {
-////                try {
-////                    events[i] = new Event(i, events_json[i].event_name);
-////                }
-////
-////            }
-//            var temp_events = JSON.parse(localStorage.getItem('event_dict'));
-////            for(var event in temp_events) {
-////                event[]
-////            }
-//            // alert(temp_events[0].event_name); //TODO: 'new event'
-//            //alert(temp_events); //TODO: '[object Object]'
-//            // alert(temp_events[0]); //TODO: '
-
-
-        }
-
         refreshDisplay();
     });
     function refreshDisplay() {
-        // Update Local Storage
-        // localStorage.setItem('id_count', event_id.toString());
-        localStorage.setItem('event_dict', JSON.stringify(events));
 
         // Mark days with events
         $('.dot').remove();
@@ -170,7 +127,7 @@
                 '<li id="event-' + event_id + '" class="event list-group-item"><div>' +
                 '   <div class="row">' +
                 '   <div class="col-xs-1">' +
-                '       <button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)" tooltip="Save">' +
+                '       <button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)">' +
                 '           <span class="glyphicon glyphicon-floppy-disk"/></button></div>' +
                 '   <div class="col-xs-4">' +
                 '       <input class="event-name form-control" type="text" id="event-name-' + event_id + '" value="' + event_name + '">' +
@@ -205,9 +162,7 @@
             $(this).timepicker();
 
             var id = $(this).attr('id').substr(12);
-            $('#event-end-' + id).timepicker({
-                'minTime': events[id].event_start,
-                'showDuration': true});
+            $('#event-end-' + id).timepicker({});
         })
     }
     $('#new-event-btn').on('click', function () {
@@ -218,9 +173,7 @@
 
         // Initialize timepicker inputs
         $('#event-start-' + event_id).timepicker();
-        $('#event-end-' + event_id).timepicker({
-            'minTime': events[event_id].event_start,
-            'showDuration': true});
+        $('#event-end-' + event_id).timepicker({});
 
         event_id++;
     });
@@ -232,7 +185,7 @@
         $('#event-update-success').addClass('hidden');
 
         // Delete events which did not receive times
-        for(var key in Object.keys(events)) {
+        for(var key in events) {
             if(events[key].event_start == '00:00:00' && events[key].event_end == '00:00:00') {
                 delete events[key];
             }
@@ -241,22 +194,20 @@
         refreshDisplay();
     });
     function saveEvent(elem) {
-        var event_id = Number(elem.id.replace('save-btn-', ""));
-        var id_string = event_id.toString();
-
-        events[event_id].set_name(document.getElementById('event-name-' + id_string).value);
+        var save_id = Number(elem.id.replace('save-btn-', ""));
+        var id_string = save_id.toString();
+        events[save_id].set_name(document.getElementById('event-name-' + id_string).value);
 
         var start = document.getElementById('event-start-' + id_string).value;
         var end = document.getElementById('event-end-' + id_string).value;
 
-        if(isValidTime(start, end, events[event_id].event_date, event_id)) {
-            events[event_id].set_time(start, end);
+        if(isValidTime(start, end, events[save_id].event_date, save_id)) {
+            events[save_id].set_time(start, end);
 
             $("#event-update-success").removeClass('hidden');
             $("#event-update-success").fadeTo(2150, 800).slideUp(800, function(){
                 $("#event-update-success").slideUp(500);
             });
-
         } else {
             $("#invalid-time-message").removeClass('hidden');
             $("#invalid-time-message").fadeTo(2150, 800).slideUp(800, function(){
@@ -283,12 +234,13 @@
         // ex. '12:30am' -> '00:30:00'
 
         var hour_pos = time.length - 5;
-        return (Number(time.substr(0, hour_pos)) % 12).toString() + time.substr(hour_pos, hour_pos + 1) + ":00"
+        return (Number(time.substr(0, hour_pos)) % 12).toString() + time.substr(hour_pos, hour_pos + 1) + ":00";
     }
     function is_time_less_then(time_1, time_2) {
         // Is time_1 <= time_2 ?
-        var format_1 = Number(time_1.replace(':', ''));
-        var format_2 = Number(time_2.replace(':', ''));
+        
+        var format_1 = Number(formatTime(time_1).replace(new RegExp(':', 'g'), ''));
+        var format_2 = Number(formatTime(time_2).replace(new RegExp(':', 'g'), ''));
 
         return format_1 < format_2;
     }
@@ -303,10 +255,10 @@
 
         if(start >= end) { return false; }
 
-        for(var key in Object.keys(events)) {
+        for(var key in events) {
             if(events[key].event_date == date && events[key].event_id != id) {
-                if(is_time_less_then(events[key].event_start, formatTime(end))) { return false; }
-                if(is_time_less_then(formatTime(start), events[key].event_end)) { return false; }
+                if(is_time_less_then(events[key].event_start, end)) { return false; }
+                if(is_time_less_then(start, events[key].event_end)) { return false; }
             }
         }
 
