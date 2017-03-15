@@ -9,6 +9,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
+    <!-- jQuery timepicker -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-timepicker/1.10.0/jquery.timepicker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timepicker/1.10.0/jquery.timepicker.min.js"></script>
+
     <!-- Custom External Files-->
     <link rel="stylesheet" href="css/calender.css">
     <script type="text/javascript" src="js/calender.js"></script>
@@ -23,14 +27,20 @@
             <!-- Modal Header -->
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title" id="modal-title"></h4>
+                <h3 class="modal-title" id="modal-title"></h3>
             </div>
 
             <!-- Modal Content -->
             <div class="modal-body">
+                <!-- Alerts -->
                 <div class="alert alert-danger hidden" id="invalid-time-message">
                     <strong>Error!</strong> Invalid time. Make sure that your event times don't conflict.
                 </div>
+                <div class="alert alert-success hidden" id="event-update-success">
+                    <strong>Success!</strong> Event has been updated.
+                </div>
+
+                <!-- List of events -->
                 <div id="event-list-container"><ul class="list-group" id="event-list"></ul></div>
             </div>
 
@@ -48,73 +58,187 @@
 
 
 <script>
-    var events = {};
-    var event_id = 0;
+    var events = {};    // Dictionary holding {id: Event} pairs
+    var event_id = 0;   // Next ID number to use
 
-    var currentDate = new Date();
-    var displayedDate;
+    var currentDate = new Date();   // Today's Date
+    var displayedDate;              // Month & Year of the currently visible calendar
 
-    // Load the calender for the current month
+    // Loading the calendar
     $(function() {
         var calender = new Calender(currentDate.getMonth(), currentDate.getFullYear());
         $('#calender-container').html(calender.getHTML());
         displayedDate = currentDate;
+
+        // Check for local storage
+        var events_json = JSON.parse(localStorage.getItem('event_dict'));
+        if(Object.keys(events_json).length > 0) { // Empty json will have length of 2
+            for(var event in events_json) {
+                if(events_json.hasOwnProperty(event)) {
+                    for(var property in events_json[event]) {
+                        var prop_list = [];
+                        if(events_json[event].hasOwnProperty(property)) {
+                            prop_list.append(property)
+                        }
+                        alert(prop_list.toString());
+                    }
+
+//                    for(var prop in prop_list) {
+//                        alert(events_json[event][prop]);
+//                    }
+                }
+
+
+            }
+
+
+            // alert(Object.keys(events_json).toString());
+//
+////            //TODO: This part is sloppy, but works for now.
+////            var events_json = JSON.parse(localStorage.getItem('event_dict'));
+////            for(var i = 0; i < event_id; i++) {
+////                try {
+////                    events[i] = new Event(i, events_json[i].event_name);
+////                }
+////
+////            }
+//            var temp_events = JSON.parse(localStorage.getItem('event_dict'));
+////            for(var event in temp_events) {
+////                event[]
+////            }
+//            // alert(temp_events[0].event_name); //TODO: 'new event'
+//            //alert(temp_events); //TODO: '[object Object]'
+//            // alert(temp_events[0]); //TODO: '
+
+
+        }
+
+        refreshDisplay();
     });
+    function refreshDisplay() {
+        // Update Local Storage
+        // localStorage.setItem('id_count', event_id.toString());
+        localStorage.setItem('event_dict', JSON.stringify(events));
+
+        // Mark days with events
+        $('.dot').remove();
+        for(var key in events) {
+            // TODO: This is pretty sloppy.
+            var date_list = events[key].event_date.split(" ");
+            var date_str = date_list[0] + " " + date_list[2];
+            var date_str_1 = MONTHS[displayedDate.getMonth()] + " " + displayedDate.getFullYear();
+
+            if(date_str == date_str_1){
+                $('#event-notifier-' + dateStrToNum(events[key].event_date)).append('<div class="dot col-xs-1">' + '&#8226;' + '</div>');
+            }
+        }
+    }
 
     // Next & Prev month buttons
     function prevBtn() {
+
+        // Decrement year
         if(displayedDate.getMonth() == 0) {
             displayedDate.setMonth(11);
             displayedDate.setFullYear(displayedDate.getFullYear() - 1);
-        } else {displayedDate.setMonth(displayedDate.getMonth() - 1)}
+        }
+        else {displayedDate.setMonth(displayedDate.getMonth() - 1)}
 
         var calender = new Calender(displayedDate.getMonth(), displayedDate.getFullYear());
         $('#calender-container').html(calender.getHTML());
+
+        refreshDisplay();
     }
     function nextBtn() {
+
+        // Increment a year
         if(displayedDate.getMonth() == 11) {
             displayedDate.setMonth(0);
             displayedDate.setFullYear(displayedDate.getFullYear() + 1);
-        } else {displayedDate.setMonth(displayedDate.getMonth() + 1)}
+        }
+        else {displayedDate.setMonth(displayedDate.getMonth() + 1)}
 
         var calender = new Calender(displayedDate.getMonth(), displayedDate.getFullYear());
         $('#calender-container').html(calender.getHTML());
+
+        refreshDisplay();
     }
 
     // Modal Functions
     function appendEvent(event_id, event_name) {
         $('#event-list').append(
                 '<li id="event-' + event_id + '" class="event list-group-item"><div>' +
-                '<button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)">' +
-                '<span class="glyphicon glyphicon-floppy-disk"></span></button><div class="spacing"></div>' +
-                '<input class="event-name" type="text" id="event-name-' + event_id + '" value="' + event_name + '">' +
-                '<input class="event-start" type="time" id="event-start-' + event_id + '" value="' + events[event_id].event_start + '">' +
-                '<input class="event-end" type="time" id="event-end-' + event_id + '" value="' + events[event_id].event_end + '">' +
-                '<button class="del-btn btn" id="del-btn-'+ event_id + '" onclick="deleteEvent(this)">' +
-                '<span class="glyphicon glyphicon-trash"></span></button>' +
+                '   <div class="row">' +
+                '   <div class="col-xs-1">' +
+                '       <button class="save-btn btn" id="save-btn-'+ event_id + '" onclick="saveEvent(this)">' +
+                '           <span class="glyphicon glyphicon-floppy-disk"/></button></div>' +
+                '   <div class="col-xs-4">' +
+                '       <input class="event-name form-control" type="text" id="event-name-' + event_id + '" value="' + event_name + '">' +
+                '   </div>' +
+                '   <div class="col-xs-3">' +
+                '       <input class="event-start form-control" id="event-start-' + event_id +
+                        '" value="' + events[event_id].event_start + '"></div>' +
+                '   <div class="col-xs-3">' +
+                '       <input class="event-end form-control" id="event-end-' + event_id +
+                        '" value="' + events[event_id].event_end + '"></div>' +
+                '   <div class="col-xs-1">' +
+                '       <button class="del-btn btn" id="del-btn-'+ event_id + '" onclick="deleteEvent(this)">' +
+                '           <span class="glyphicon glyphicon-trash"/></button></div>' +
                 '</li>');
     }
     function expandDay(day) {
         var textDate = formatDate(day, displayedDate.getFullYear().toString());
+        var c_pos = textDate.length - 5;    // Comma position
+        $('#modal-title').html(textDate.slice(0, c_pos) + "," + textDate.slice(c_pos));
         $('#dayModal').modal('show');
-        $('#modal-title').html(textDate);
         $('#new-event-btn').attr('name', textDate);
 
+        // Populate with events
         for(var key in events) {
             if(events[key].event_date == textDate) {
                 appendEvent(events[key].event_id, events[key].event_name);
             }
         }
+
+        // Initilize timepicker inputs
+        $('.event-start').each(function () {
+            $(this).timepicker();
+
+            var id = $(this).attr('id').substr(12);
+            $('#event-end-' + id).timepicker({
+                'minTime': events[id].event_start,
+                'showDuration': true});
+        })
     }
     $('#new-event-btn').on('click', function () {
-        events[event_id] = new Event(event_id, $('#modal-title').text());
+        events[event_id] = new Event(event_id, $('#modal-title').text().replace(',', ''));
         events[event_id].event_name = 'new event';
+        events[event_id].set_time('00:00:00', '00:00:00');
         appendEvent(event_id, events[event_id].event_name);
+
+        // Initialize timepicker inputs
+        $('#event-start-' + event_id).timepicker();
+        $('#event-end-' + event_id).timepicker({
+            'minTime': events[event_id].event_start,
+            'showDuration': true});
+
         event_id++;
     });
     $('#dayModal').on('hidden.bs.modal', function () {
         $('#event-list').empty();
+
+        // Hide alerts
         $('#invalid-time-message').addClass('hidden');
+        $('#event-update-success').addClass('hidden');
+
+        // Delete events which did not receive times
+        for(var key in Object.keys(events)) {
+            if(events[key].event_start == '00:00:00' && events[key].event_end == '00:00:00') {
+                delete events[key];
+            }
+        }
+
+        refreshDisplay();
     });
     function saveEvent(elem) {
         var event_id = Number(elem.id.replace('save-btn-', ""));
@@ -127,9 +251,22 @@
 
         if(isValidTime(start, end, events[event_id].event_date, event_id)) {
             events[event_id].set_time(start, end);
-        } else { $('#invalid-time-message').removeClass('hidden'); }
+
+            $("#event-update-success").removeClass('hidden');
+            $("#event-update-success").fadeTo(2600, 500).slideUp(800, function(){
+                $("#event-update-success").slideUp(500);
+            });
+
+        } else {
+            $("#invalid-time-message").removeClass('hidden');
+            $("#invalid-time-message").fadeTo(2600, 500).slideUp(800, function(){
+                $("#event-update-success").slideUp(500);
+            });
+        }
     }
     function deleteEvent(elem) {
+        // TODO: change the 'del-btn'. Only del-btn class triggers this function so its ok for now.
+
         var event_id = Number(elem.id.replace('del-btn-', ""));
         delete events[event_id];
         $('#event-' + event_id.toString()).remove();
@@ -137,21 +274,43 @@
 
     // Helper function
     function formatDate(date, year) {
+        // ex. ('1-2', '2017') -> 'January 2 2017)
+
         var d_array = date.split('-');
         return MONTHS[d_array[0]] + " " + d_array[1].toString() + " " + year;
     }
+    function formatTime(time) {
+        // ex. '12:30am' -> '00:30:00'
+
+        var hour_pos = time.length - 5;
+        return (Number(time.substr(0, hour_pos)) % 12).toString() + time.substr(hour_pos, hour_pos + 1) + ":00"
+    }
+    function is_time_less_then(time_1, time_2) {
+        // Is time_1 <= time_2 ?
+        var format_1 = Number(time_1.replace(':', ''));
+        var format_2 = Number(time_2.replace(':', ''));
+
+        return format_1 < format_2;
+    }
+    function dateStrToNum(date) {
+        // ex. 'January 2 2017' -> '1-2'
+
+        var date_list = date.split(" ");
+        return MONTHS.indexOf(date_list[0]).toString() + "-" + date_list[1];
+    }
     function isValidTime(start, end, date, id) {
+        // Checks that the times do not overlap with other events on the same day
+
         if(start >= end) { return false; }
 
-        for(var i = 0; i < Object.keys(events).length; i++) {
-            if(events[i].event_date == date && id != i) {
-                if(events[i].event_start <= end) { return false; }
-                if(events[i].event_end >= start) { return false; }
+        for(var key in Object.keys(events)) {
+            if(events[key].event_date == date && events[key].event_id != id) {
+                if(is_time_less_then(events[key].event_start, formatTime(end))) { return false; }
+                if(is_time_less_then(formatTime(start), events[key].event_end)) { return false; }
             }
         }
 
         return true;
     }
 </script>
-
 </html>
