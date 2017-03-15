@@ -86,3 +86,17 @@ ul {
     position: relative;
     left: -20px;
 }
+
+#hover-preview {
+    z-index: 1;
+    position: absolute;
+    background-color: whitesmoke;
+    pointer-events: none;
+
+    -moz-box-shadow: 10px 10px 5px #888;
+    -webkit-box-shadow: 10px 10px 5px #888;
+    box-shadow: 10px 10px 5px #888;
+}
+#preview-list {
+    margin: 3px;
+}

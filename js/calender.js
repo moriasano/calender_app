@@ -43,7 +43,8 @@ function Calender(month, year) {
             for(var j = 0; j <= 6; j++) {
                 if(day <= monthLength && (i > 0 || j >= startDay)) {
                     var id = this.month.toString()+ "-" + day.toString();
-                    html += '<td class="calender-day" id="' + id + '" onclick="expandDay(this.id)">' +
+                    html += '<td class="calender-day" id="' + id + '" onclick="expandDay(this.id)"' +
+                            ' onmouseenter="dayPreview(this.id)" onmouseleave="closePreview()">' +
                             '   <div class="row" id="event-notifier-' + id + '">' +
                             '       <div class="col-xs-2">&nbsp;' + day + '</div>' +
                             '   </div>';
